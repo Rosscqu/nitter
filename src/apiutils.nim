@@ -73,16 +73,18 @@ template fetchImpl(result, fetchBody) {.dirty.} =
   try:
     var resp: AsyncResponse
     pool.use(genHeaders($url, account.oauthToken, account.oauthSecret)):
+      echo "[accounts] fetching url: ", $url
       template getContent =
         resp = await c.get($url)
         result = await resp.body
 
       getContent()
-
+      echo "[accounts] resp: ", resp.status
       if resp.status == $Http503:
         badClient = true
         raise newException(BadClientError, "Bad client")
-
+      echo "[accounts] resp headers: ", resp.headers
+      
     if resp.headers.hasKey(rlRemaining):
       let
         remaining = parseInt(resp.headers[rlRemaining])

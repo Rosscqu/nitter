@@ -36,11 +36,12 @@ proc getConfig*(path: string): (Config, parseCfg.Config) =
     # Config
     hmacKey: cfg.get("Config", "hmacKey", "secretkey"),
     base64Media: cfg.get("Config", "base64Media", false),
-    minTokens: cfg.get("Config", "tokenCount", 10),
+    minTokens: cfg.get("Config", "tokenCount", 2000),
     enableRss: cfg.get("Config", "enableRSS", true),
     enableDebug: cfg.get("Config", "enableDebug", false),
     proxy: cfg.get("Config", "proxy", ""),
     proxyAuth: cfg.get("Config", "proxyAuth", "")
   )
+  echo "minTokens: ", conf.minTokens
 
   return (conf, cfg)

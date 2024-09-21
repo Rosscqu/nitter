@@ -41,7 +41,7 @@ enableRSS = true  # set this to false to disable RSS feeds
 enableDebug = false  # enable request logs and debug endpoints (/.accounts)
 proxy = ""  # http/https url, SOCKS proxies are not supported
 proxyAuth = ""
-tokenCount = 10
+tokenCount = 200
 # minimum amount of usable tokens. tokens are used to authorize API requests,
 # but they expire after ~1 hour, and have a limit of 500 requests per endpoint.
 # the limits reset every 15 minutes, and the pool is filled up so there's
