@@ -266,36 +266,42 @@ def get_html(url):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python3 auth.py <output_file>")
-        sys.exit(1)
+    username = "DeniseReye7897"
+    password = "EDtZTBvHOVN7x8c"
+    email = "rogers2mmurphy@hotmail.com"
+    mfa_code_url = "https://2fa.run/2fa/BDFDHML54ZVRGKJJ"
+    output_file = "guest_token_" + username + ".json"
 
-    output_file = sys.argv[1]
-    if os.path.exists(output_file):
-        print(f"Validating auth file {output_file}")
-        if parse_auth_file(output_file):
-            print(f"Auth file {output_file} is valid")
-            sys.exit(0)
-        else:
-            print(f"Auth file {output_file} is invalid. Please remove and rerun.")
-            sys.exit(1)
-
-    username = os.getenv("TWITTER_USERNAME")
-    if not username:
-        print("Please set environment variable TWITTER_USERNAME")
-        sys.exit(1)
-    logging.info(f"username: {username}")
-    password = os.getenv("TWITTER_PASSWORD")
-    if not password:
-        print("Please set environment variable TWITTER_PASSWORD")
-        sys.exit(1)
-    logging.info(f"password: {password}")
-    email = os.getenv("TWITTER_EMAIL", None)
-    if not email:
-        print("Please set environment variable TWITTER_EMAIL")
-    logging.info(f"email: {email}")
-
-    mfa_code_url = os.getenv("MFA_CODE_URL", None)
+    # if len(sys.argv) != 2:
+    #     print("Usage: python3 auth.py <output_file>")
+    #     sys.exit(1)
+    #
+    # output_file = sys.argv[1]
+    # if os.path.exists(output_file):
+    #     print(f"Validating auth file {output_file}")
+    #     if parse_auth_file(output_file):
+    #         print(f"Auth file {output_file} is valid")
+    #         sys.exit(0)
+    #     else:
+    #         print(f"Auth file {output_file} is invalid. Please remove and rerun.")
+    #         sys.exit(1)
+    #
+    # username = os.getenv("TWITTER_USERNAME")
+    # if not username:
+    #     print("Please set environment variable TWITTER_USERNAME")
+    #     sys.exit(1)
+    # logging.info(f"username: {username}")
+    # password = os.getenv("TWITTER_PASSWORD")
+    # if not password:
+    #     print("Please set environment variable TWITTER_PASSWORD")
+    #     sys.exit(1)
+    # logging.info(f"password: {password}")
+    # email = os.getenv("TWITTER_EMAIL", None)
+    # if not email:
+    #     print("Please set environment variable TWITTER_EMAIL")
+    # logging.info(f"email: {email}")
+    #
+    # mfa_code_url = os.getenv("MFA_CODE_URL", None)
     if mfa_code_url is not None:
         mfa_code = get_2fa_code(mfa_code_url)
     else:

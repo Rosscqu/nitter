@@ -6,7 +6,7 @@ import types, api
 
 const
   redisNil = "\0\0"
-  baseCacheTime = 60 * 60
+  baseCacheTime = 1 * 30
 
 var
   pool: RedisPool
