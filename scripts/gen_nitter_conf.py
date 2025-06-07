@@ -19,11 +19,11 @@ title = "[TITLE_PLZ_CHANGE]"
 address = "0.0.0.0"
 port = [PORT_PLZ_CHANGE]
 https = [HTTPS_PLZ_CHANGE]  # disable to enable cookies when not using https
-httpMaxConnections = 100
+httpMaxConnections = 500
 staticDir = "./public"
 
 [Cache]
-listMinutes = 240  # how long to cache list info (not the tweets, so keep it high)
+listMinutes = 500  # how long to cache list info (not the tweets, so keep it high)
 rssMinutes = 10  # how long to cache rss queries
 redisHost = "[REDIS_HOST_PLZ_CHANGE]"  # Change to "nitter-redis" if using docker-compose
 redisPort = [REDIS_PORT_PLZ_CHANGE]

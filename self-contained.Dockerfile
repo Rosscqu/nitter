@@ -30,6 +30,7 @@ COPY --from=overmind /root/go/bin/overmind ./
 COPY scripts/ ./scripts/
 COPY scripts/assets/redis.conf ./redis.conf
 COPY scripts/assets/nginx.conf /etc/nginx/nginx.conf
+COPY nitter-data/guest_accounts.json  ../nitter-data/guest_accounts.json
 RUN mkdir -p /etc/nginx/conf.d
 # self-contained bits end
 EXPOSE 8081

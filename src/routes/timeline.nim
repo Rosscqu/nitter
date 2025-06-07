@@ -27,16 +27,21 @@ template skipIf[T](cond: bool; default; body: Future[T]): Future[T] =
   else:
     body
 
-proc fetchProfile*(after: string; query: Query; skipRail=false;
+# 核心代码，个人主页入口
+proc fetchProfile*(after: string; query: Query; skipRail=true;
                    skipPinned=false): Future[Profile] {.async.} =
   let
     name = query.fromUser[0]
     userId = await getUserId(name)
 
   if userId.len == 0:
+    echo "ERROR: fetch user profile error, userId is nil, username is ", name
     return Profile(user: User(username: name))
   elif userId == "suspended":
     return Profile(user: User(username: name, suspended: true))
+  elif userId == "getGraphUser error":
+    echo "ERROR: fetch user profile error, userId is nil, username is ", name
+    return Profile(user: User(username: name))
 
   # temporary fix to prevent errors from people browsing
   # timelines during/immediately after deployment
@@ -65,24 +70,40 @@ proc fetchProfile*(after: string; query: Query; skipRail=false;
 
 proc showTimeline*(request: Request; query: Query; cfg: Config; prefs: Prefs;
                    rss, after: string): Future[string] {.async.} =
-  if query.fromUser.len != 1:
-    let
-      timeline = await getGraphTweetSearch(query, after)
-      html = renderTweetSearch(timeline, prefs, getPath())
-    return renderMain(html, request, cfg, prefs, "Multi", rss=rss)
+  # if query.fromUser.len != 1:
+  #   let
+  #     timeline = await getGraphTweetSearch(query, after)
+  #     html = renderTweetSearch(timeline, prefs, getPath())
+  #   return renderMain(html, request, cfg, prefs, "Multi", rss=rss)
 
-  var profile = await fetchProfile(after, query, skipPinned=prefs.hidePins)
-  template u: untyped = profile.user
+  const maxRetries = 3
+  var retryCount = 0
 
-  if u.suspended:
-    return showError(getSuspended(u.username), cfg)
+  while retryCount < maxRetries:
+    try:
+      var profile = await fetchProfile(after, query, skipPinned=prefs.hidePins)
+      echo "[profile] useId is ", profile.user.id, "username is ", profile.user.username
+      if profile.user.id.len > 0:
+        template u: untyped = profile.user
 
-  if profile.user.id.len == 0: return
+        if u.suspended:
+          return showError(getSuspended(u.username), cfg)
 
-  let pHtml = renderProfile(profile, prefs, getPath())
-  result = renderMain(pHtml, request, cfg, prefs, pageTitle(u), pageDesc(u),
-                      rss=rss, images = @[u.getUserPic("_400x400")],
-                      banner=u.banner)
+        let pHtml = renderProfile(profile, prefs, getPath())
+        result = renderMain(pHtml, request, cfg, prefs, pageTitle(u), pageDesc(u),
+                          rss=rss, images = @[u.getUserPic("_400x400")],
+                          banner=u.banner)
+        
+        if result.len > 0:
+          return result
+      echo "retry #", retryCount + 1, ": query text is ", query.text, " userName is ", query.fromUser[0]
+    except Exception as e:
+      echo "retry #", retryCount + 1, ": ", e.msg
+
+    retryCount.inc
+    await sleepAsync(1000) # 等待1秒后重试
+
+  return showError(query.text & "无法加载页面，请稍后重试", cfg)
 
 template respTimeline*(timeline: typed) =
   let t = timeline

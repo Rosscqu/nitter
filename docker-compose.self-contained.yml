@@ -12,7 +12,7 @@ services:
       - nitter-data:/nitter-data
     environment:
       # shuold be included for custom paths
-      - NITTER_ACCOUNTS_FILE=/nitter-data/guest_accounts.json
+      - NITTER_ACCOUNTS_FILE=/nitter-data/guest_accounts2.json
       # optional instance custmizations from env
       - INSTANCE_TITLE=Custom title
       - INSTANCE_THEME=Twitter Dark

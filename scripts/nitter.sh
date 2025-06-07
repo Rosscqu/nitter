@@ -2,7 +2,7 @@
 set -e
 
 echo Running auth...
-python /src/scripts/auth.py /nitter-data/guest_accounts.json
+#python /src/scripts/auth.py /nitter-data/guest_accounts2.json
 
 echo Generating nitter conf...
 python /src/scripts/gen_nitter_conf.py /src/nitter.conf

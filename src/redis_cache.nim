@@ -123,8 +123,11 @@ proc getUserId*(username: string): Future[string] {.async.} =
       if user.suspended:
         return "suspended"
       else:
-        await all(cacheUserId(name, user.id), cache(user))
-        return user.id
+        if user.id.len != 0:
+          await all(cacheUserId(name, user.id), cache(user))
+          return user.id
+        else:
+          return "getGraphUser error"
 
 proc getCachedUser*(username: string; fetch=true): Future[User] {.async.} =
   let prof = await get("p:" & toLower(username))

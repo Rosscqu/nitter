@@ -67,23 +67,23 @@ template fetchImpl(result, fetchBody) {.dirty.} =
 
   var account = await getGuestAccount(api)
   if account.oauthToken.len == 0:
-    echo "[accounts] Empty oauth token, account: ", account.id
+    error("[accounts] Empty oauth token, account: ", account.id)
+    # echo "[accounts] Empty oauth token, account: ", account.id
     raise rateLimitError()
 
   try:
     var resp: AsyncResponse
     pool.use(genHeaders($url, account.oauthToken, account.oauthSecret)):
-      echo "[accounts] fetching url: ", $url
       template getContent =
         resp = await c.get($url)
         result = await resp.body
 
       getContent()
-      echo "[accounts] resp: ", resp.status
       if resp.status == $Http503:
         badClient = true
         raise newException(BadClientError, "Bad client")
-      echo "[accounts] resp headers: ", resp.headers
+      info("[account] id: ", account.id, ", fetching url: ", $url, ", resp headers: ", resp.headers, " resp status: ", resp.status)
+      # echo "[account] id: ", account.id, ", fetching url: ", $url, ", resp headers: ", resp.headers, " resp status: ", resp.status
       
     if resp.headers.hasKey(rlRemaining):
       let
@@ -98,7 +98,7 @@ template fetchImpl(result, fetchBody) {.dirty.} =
       if result.startsWith("{\"errors"):
         let errors = result.fromJson(Errors)
         if errors in {expiredToken, badToken}:
-          echo "fetch error: ", errors
+          echo "[account] id: ", account.id, " [fetch url]: ", $url, " [fetch error]: ", errors
           invalidate(account)
           raise rateLimitError()
         elif errors in {rateLimited}:
@@ -106,7 +106,7 @@ template fetchImpl(result, fetchBody) {.dirty.} =
           setLimited(account, api)
           raise rateLimitError()
       elif result.startsWith("429 Too Many Requests"):
-        echo "[accounts] 429 error, API: ", api, ", account: ", account.id
+        echo "[accounts] 429 error, API: ", api, ", account id: ", account.id
         account.apis[api].remaining = 0
         # rate limit hit, resets after the 15 minute window
         raise rateLimitError()

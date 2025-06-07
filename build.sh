@@ -1,7 +1,7 @@
 #!/bin/bash
 
 APP_NAME="nitter"
-APP_VERSION="v1.1"
+APP_VERSION="v1.1.7.1"
 
 echo pwd
 

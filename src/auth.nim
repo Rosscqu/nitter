@@ -177,7 +177,7 @@ proc setRateLimit*(account: GuestAccount; api: Api; remaining, reset: int) =
   # avoid undefined behavior in race conditions
   if api in account.apis:
     let limit = account.apis[api]
-    echo "[accounts] setRateLimit: ", api, ", reset: ", reset, ", remaining: ", remaining
+    echo "[account] id: ", account.id, ", setRateLimit: ", api, ", reset: ", reset, ", remaining: ", remaining
     if limit.reset >= reset and limit.remaining < remaining:
       return
     if limit.reset == reset and limit.remaining >= remaining:

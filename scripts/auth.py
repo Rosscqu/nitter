@@ -1,5 +1,7 @@
 # adapted from
 # https://github.com/zedeus/nitter/issues/983#issuecomment-1914616663
+from dataclasses import dataclass
+
 import requests
 import base64
 import json
@@ -21,7 +23,7 @@ TW_ANDROID_BASIC_TOKEN = 'Basic {token}'.format(token=base64.b64encode(
 logging.debug("TW_ANDROID_BASIC_TOKEN=" + TW_ANDROID_BASIC_TOKEN)
 
 
-def auth(username: str, password: str, email:Optional[str], mfa_code: Optional[str]) -> Optional[dict]:
+def auth(username: str, password: str, email: Optional[str], mfa_code: Optional[str]) -> Optional[dict]:
     logging.debug("start auth")
 
     bearer_token_req = requests.post("https://api.twitter.com/oauth2/token",
@@ -105,19 +107,19 @@ def auth(username: str, password: str, email:Optional[str], mfa_code: Optional[s
     for t2_subtask in task2.json().get('subtasks', []):
         if t2_subtask['subtask_id'] == 'LoginEnterAlternateIdentifierSubtask':
             task2_1 = session.post('https://api.twitter.com/1.1/onboarding/task.json',
-                         json={
-                             "flow_token": task2.json().get('flow_token'),
-                             "subtask_inputs": [{
-                                 "enter_text": {
-                                     "text": email,
-                                     "link": "next_link"
-                                 },
-                                 "subtask_id": "LoginEnterAlternateIdentifierSubtask"
-                             }
-                             ]
-                         },
-                         headers=twitter_header
-                         )
+                                   json={
+                                       "flow_token": task2.json().get('flow_token'),
+                                       "subtask_inputs": [{
+                                           "enter_text": {
+                                               "text": email,
+                                               "link": "next_link"
+                                           },
+                                           "subtask_id": "LoginEnterAlternateIdentifierSubtask"
+                                       }
+                                       ]
+                                   },
+                                   headers=twitter_header
+                                   )
             flow_token = task2_1.json().get('flow_token')
             logging.info(f"task2_1: {task2_1.json()}")
 
@@ -265,55 +267,121 @@ def get_html(url):
     return response.text
 
 
+@dataclass
+class Account:
+    """账号数据结构"""
+    username: str
+    password: str
+    key: str
+    email: str
+    extra_key: str
+    auth_token: str
+
+
+def parse_account_file(file_path: str):
+    """
+    解析账号文件并返回账号列表
+
+    Args:
+        file_path: 文件路径
+
+    Returns:
+        包含Account对象的列表
+    """
+    accounts = []
+
+    try:
+        with open(file_path, 'r', encoding='utf-8') as file:
+            for line in file:
+                # 按----分割字段
+                fields = line.strip().split('----')
+
+                if len(fields) >= 6:
+                    # 处理auth_token字段，去除前缀
+                    auth_token = fields[5]
+                    if auth_token.startswith('auth_token='):
+                        auth_token = auth_token[len('auth_token='):]
+
+                    # 创建Account对象
+                    account = Account(
+                        username=fields[0].strip(),
+                        password=fields[1].strip(),
+                        key=fields[2].strip(),
+                        email=fields[3].strip(),
+                        extra_key=fields[4].strip(),
+                        auth_token=auth_token.strip()
+                    )
+                    accounts.append(account)
+
+    except FileNotFoundError:
+        print(f"错误：找不到文件 {file_path}")
+    except Exception as e:
+        print(f"解析文件时发生错误: {str(e)}")
+
+    return accounts
+
+
 if __name__ == "__main__":
-    username = "DeniseReye7897"
-    password = "EDtZTBvHOVN7x8c"
-    email = "rogers2mmurphy@hotmail.com"
-    mfa_code_url = "https://2fa.run/2fa/BDFDHML54ZVRGKJJ"
-    output_file = "guest_token_" + username + ".json"
 
-    # if len(sys.argv) != 2:
-    #     print("Usage: python3 auth.py <output_file>")
-    #     sys.exit(1)
-    #
-    # output_file = sys.argv[1]
-    # if os.path.exists(output_file):
-    #     print(f"Validating auth file {output_file}")
-    #     if parse_auth_file(output_file):
-    #         print(f"Auth file {output_file} is valid")
-    #         sys.exit(0)
-    #     else:
-    #         print(f"Auth file {output_file} is invalid. Please remove and rerun.")
-    #         sys.exit(1)
-    #
-    # username = os.getenv("TWITTER_USERNAME")
-    # if not username:
-    #     print("Please set environment variable TWITTER_USERNAME")
-    #     sys.exit(1)
-    # logging.info(f"username: {username}")
-    # password = os.getenv("TWITTER_PASSWORD")
-    # if not password:
-    #     print("Please set environment variable TWITTER_PASSWORD")
-    #     sys.exit(1)
-    # logging.info(f"password: {password}")
-    # email = os.getenv("TWITTER_EMAIL", None)
-    # if not email:
-    #     print("Please set environment variable TWITTER_EMAIL")
-    # logging.info(f"email: {email}")
-    #
-    # mfa_code_url = os.getenv("MFA_CODE_URL", None)
-    if mfa_code_url is not None:
-        mfa_code = get_2fa_code(mfa_code_url)
-    else:
-        mfa_code = None
-    logging.info(f"mfa_code: {mfa_code}")
-    
-    auth_res = auth(username, password, email, mfa_code)
+    # 文件路径
+    file_path = "/Users/chengxi/web3_workspace/nitter/scripts/test.txt"
 
-    if auth_res is None:
-        print(
-            "Failed authentication. You might have entered the wrong username/password. Please rerun with environment variable DEBUG=1 for debugging.")
-        sys.exit(1)
+    # 解析文件
+    output_file = "guest_tokens1" + ".json"
+    tokens = []
+    accounts = parse_account_file(file_path)
+    for i, account in enumerate(accounts):
+        try:
+            username = account.username
+            password = account.password
+            mfa_code_url = "https://2fa.run/2fa/" + account.key
+            email = account.email
+            # if len(sys.argv) != 2:
+            #     print("Usage: python3 auth.py <output_file>")
+            #     sys.exit(1)
+            #
+            # output_file = sys.argv[1]
+            # if os.path.exists(output_file):
+            #     print(f"Validating auth file {output_file}")
+            #     if parse_auth_file(output_file):
+            #         print(f"Auth file {output_file} is valid")
+            #         sys.exit(0)
+            #     else:
+            #         print(f"Auth file {output_file} is invalid. Please remove and rerun.")
+            #         sys.exit(1)
+            #
+            # username = os.getenv("TWITTER_USERNAME")
+            # if not username:
+            #     print("Please set environment variable TWITTER_USERNAME")
+            #     sys.exit(1)
+            # logging.info(f"username: {username}")
+            # password = os.getenv("TWITTER_PASSWORD")
+            # if not password:
+            #     print("Please set environment variable TWITTER_PASSWORD")
+            #     sys.exit(1)
+            # logging.info(f"password: {password}")
+            # email = os.getenv("TWITTER_EMAIL", None)
+            # if not email:
+            #     print("Please set environment variable TWITTER_EMAIL")
+            # logging.info(f"email: {email}")
+            #
+            # mfa_code_url = os.getenv("MFA_CODE_URL", None)
+            if mfa_code_url is not None:
+                mfa_code = get_2fa_code(mfa_code_url)
+            else:
+                mfa_code = None
+            logging.info(f"mfa_code: {mfa_code}")
+
+            auth_res = auth(username, password, email, mfa_code)
+            if auth_res is None:
+                print(
+                    username + "Failed authentication. You might have entered the wrong username/password. Please rerun with environment variable DEBUG=1 for debugging.")
+            else:
+                logging.info(auth_res)
+                tokens.append(auth_res)
+        except Exception as e:
+            print(f"获取 token 错误: {str(e)}, account: {account.username}")
+
     with open(output_file, "w") as f:
-        f.write(json.dumps([auth_res]))
+        f.write(json.dumps(tokens))
     print(f"Auth file {output_file} created successfully")

@@ -19,7 +19,7 @@ let
   configPath = getEnv("NITTER_CONF_FILE", "./nitter.conf")
   (cfg, fullCfg) = getConfig(configPath)
 
-  accountsPath = getEnv("NITTER_ACCOUNTS_FILE", "./guest_accounts.json")
+  accountsPath = getEnv("NITTER_ACCOUNTS_FILE", "./guest_accounts2.json")
 
 initAccountPool(cfg, accountsPath)
 
